@@ -415,7 +415,7 @@ class TripleDDetect(nn.Module):
             a[-1].bias.data[:] = 1.0  # box
             b[-1].bias.data[:m.nc] = math.log(5 / m.nc / (640 / s) ** 2)  # cls (5 objects and 80 classes per 640 image)
 
-class DualDetect(nn.Module):
+class NMSFreeDualDetect(nn.Module):
     """YOLOv9 backbone 위에 v10 스타일 Dual Head를 올린 Detection Head"""
     dynamic = False
     export = False
