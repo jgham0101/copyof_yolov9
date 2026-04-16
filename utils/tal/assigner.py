@@ -177,3 +177,66 @@ class TaskAlignedAssigner(nn.Module):
         target_scores = torch.where(fg_scores_mask > 0, target_scores, 0)
 
         return target_labels, target_bboxes, target_scores
+
+class One2OneAssigner:
+    """
+    YOLOv10의 one-to-one matching.
+    TAL로 cost matrix를 구한 뒤, Hungarian 또는 greedy top-1으로
+    각 GT에 딱 하나의 anchor만 할당.
+    """
+    def __init__(self, topk=1):
+        self.topk = topk  # 항상 1
+        self.tal = TaskAlignedAssigner(topk=13)  # 내부 cost 계산용
+
+    @torch.no_grad()
+    def __call__(self, pd_scores, pd_bboxes, anc_points, gt_labels, gt_bboxes, mask_gt):
+        """
+        1) TAL과 동일하게 alignment metric 계산
+        2) 각 GT에 대해 metric이 가장 높은 anchor 1개만 선택
+        3) 나머지는 모두 background로 처리
+        """
+        bs, n_anchors = pd_scores.shape[:2]
+        n_gt = gt_bboxes.shape[1]
+
+        if n_gt == 0:
+            return (
+                torch.full((bs, n_anchors), 0, device=pd_scores.device),
+                torch.zeros_like(gt_bboxes[:, :0]).expand(bs, n_anchors, -1),
+                torch.zeros_like(gt_labels[:, :0]).expand(bs, n_anchors),
+                torch.zeros((bs, n_anchors), device=pd_scores.device),
+                torch.zeros((bs, n_anchors), device=pd_scores.device, dtype=torch.long),
+            )
+
+        # alignment metric: s^alpha * u^beta
+        # s = classification score, u = IoU
+        align_metric, overlaps = self._compute_alignment(
+            pd_scores, pd_bboxes, gt_labels, gt_bboxes, anc_points, mask_gt
+        )
+
+        # 각 GT마다 best anchor 1개만 선택
+        target_labels = torch.zeros((bs, n_anchors), device=pd_scores.device, dtype=torch.long)
+        target_bboxes = torch.zeros((bs, n_anchors, 4), device=pd_scores.device)
+        target_scores = torch.zeros((bs, n_anchors, self.nc), device=pd_scores.device)
+        fg_mask = torch.zeros((bs, n_anchors), device=pd_scores.device, dtype=torch.bool)
+
+        for b_idx in range(bs):
+            for gt_idx in range(n_gt):
+                if not mask_gt[b_idx, gt_idx].any():
+                    continue
+                # 해당 GT에 대해 가장 높은 alignment metric을 가진 anchor 선택
+                metrics = align_metric[b_idx, gt_idx]  # (n_anchors,)
+                best_anchor = metrics.argmax()
+
+                # 이미 할당된 anchor라면 다음 best로 이동
+                if fg_mask[b_idx, best_anchor]:
+                    sorted_indices = metrics.argsort(descending=True)
+                    for idx in sorted_indices:
+                        if not fg_mask[b_idx, idx]:
+                            best_anchor = idx
+                            break
+
+                fg_mask[b_idx, best_anchor] = True
+                target_labels[b_idx, best_anchor] = gt_labels[b_idx, gt_idx]
+                target_bboxes[b_idx, best_anchor] = gt_bboxes[b_idx, gt_idx]
+
+        return target_labels, target_bboxes, target_scores, fg_mask

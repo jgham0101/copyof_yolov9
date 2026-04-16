@@ -415,6 +415,97 @@ class TripleDDetect(nn.Module):
             a[-1].bias.data[:] = 1.0  # box
             b[-1].bias.data[:m.nc] = math.log(5 / m.nc / (640 / s) ** 2)  # cls (5 objects and 80 classes per 640 image)
 
+class DualDetect(nn.Module):
+    """YOLOv9 backbone 위에 v10 스타일 Dual Head를 올린 Detection Head"""
+    dynamic = False
+    export = False
+    shape = None
+
+    def __init__(self, nc=80, ch=()):
+        super().__init__()
+        self.nc = nc        # number of classes
+        self.nl = len(ch)   # number of detection layers (e.g., 3 for P3/P4/P5)
+        self.reg_max = 16
+        self.no = nc + self.reg_max * 4  # outputs per anchor
+        self.stride = torch.zeros(self.nl)
+
+        # ===== One-to-Many Head (학습 + 보조) =====
+        c2 = max(16, ch[0] // 4, self.reg_max * 4)
+        c3 = max(ch[0], min(self.nc, 100))
+
+        self.cv2 = nn.ModuleList(
+            nn.Sequential(
+                Conv(x, c2, 3), Conv(c2, c2, 3),
+                nn.Conv2d(c2, 4 * self.reg_max, 1)
+            ) for x in ch
+        )
+        self.cv3 = nn.ModuleList(
+            nn.Sequential(
+                Conv(x, c3, 3), Conv(c3, c3, 3),
+                nn.Conv2d(c3, self.nc, 1)
+            ) for x in ch
+        )
+
+        # ===== One-to-One Head (추론용) =====
+        c2_o2o = max(16, ch[0] // 4, self.reg_max * 4)
+        c3_o2o = max(ch[0], min(self.nc, 100))
+
+        self.cv2_o2o = nn.ModuleList(
+            nn.Sequential(
+                Conv(x, c2_o2o, 3), Conv(c2_o2o, c2_o2o, 3),
+                nn.Conv2d(c2_o2o, 4 * self.reg_max, 1)
+            ) for x in ch
+        )
+        self.cv3_o2o = nn.ModuleList(
+            nn.Sequential(
+                Conv(x, c3_o2o, 3), Conv(c3_o2o, c3_o2o, 3),
+                nn.Conv2d(c3_o2o, self.nc, 1)
+            ) for x in ch
+        )
+
+        self.dfl = DFL(self.reg_max) if self.reg_max > 1 else nn.Identity()
+
+    def forward(self, x):
+        """
+        x: list of feature maps from neck [P3, P4, P5]
+        Returns:
+          training: (o2m_output, o2o_output)  각각 (batch, anchors, no)
+          inference: o2o_output only (NMS 불필요)
+        """
+        # One-to-Many branch
+        o2m = []
+        for i in range(self.nl):
+            o2m.append(torch.cat((self.cv2[i](x[i]), self.cv3[i](x[i])), 1))
+
+        # One-to-One branch
+        o2o = []
+        for i in range(self.nl):
+            o2o.append(torch.cat((self.cv2_o2o[i](x[i]), self.cv3_o2o[i](x[i])), 1))
+
+        if self.training:
+            return {"one2many": o2m, "one2one": o2o}
+        else:
+            # 추론 시 o2o만 사용 → NMS 불필요
+            return self._inference(o2o)
+
+    def _inference(self, o2o):
+        """o2o 출력을 decode하여 최종 bbox+cls 반환"""
+        for i in range(self.nl):
+            o2o[i] = o2o[i].view(
+                o2o[i].shape[0], self.no, -1
+            ).permute(0, 2, 1)  # (B, HW, no)
+
+        pred = torch.cat(o2o, dim=1)  # (B, total_anchors, no)
+        box, cls = pred.split([self.reg_max * 4, self.nc], dim=-1)
+
+        # DFL decode + dist2bbox
+        b, a, _ = box.shape
+        box = self.dfl(box.view(b, a, 4, self.reg_max))  # (B, A, 4)
+        cls = cls.sigmoid()
+
+        # confidence threshold만으로 필터링 (NMS 없음)
+        return torch.cat([box, cls], dim=-1)
+
 
 class Segment(Detect):
     # YOLO Segment head for segmentation models

@@ -1,0 +1,81 @@
+import torch
+import torch.nn as nn
+from utils.loss import BboxLoss  # YOLOv9 기존 bbox loss 재사용
+from utils.tal import TaskAlignedAssigner, One2OneAssigner
+
+class DualDetectionLoss(nn.Module):
+    """
+    학습 시 two heads에 대해 각각 loss를 계산:
+      L_total = L_o2m + λ * L_o2o
+    
+    λ는 보통 1.0 또는 0.25로 설정.
+    o2m이 주된 학습 신호, o2o는 consistent matching을 학습.
+    """
+    def __init__(self, model):
+        super().__init__()
+        device = next(model.parameters()).device
+        h = model.hyp
+
+        m = model.model[-1]  # DualDetect
+        self.nc = m.nc
+        self.nl = m.nl
+        self.reg_max = m.reg_max
+        self.device = device
+        self.stride = m.stride
+
+        self.bce = nn.BCEWithLogitsLoss(reduction='none')
+        self.bbox_loss = BboxLoss(m.reg_max - 1)
+
+        # Assigners
+        self.assigner_o2m = TaskAlignedAssigner(topk=10, num_classes=self.nc, alpha=0.5, beta=6.0)
+        self.assigner_o2o = One2OneAssigner()
+
+        # Loss weights
+        self.box_gain = h.get('box', 7.5)
+        self.cls_gain = h.get('cls', 0.5)
+        self.dfl_gain = h.get('dfl', 1.5)
+        self.o2o_weight = 0.25  # λ: one2one loss 가중치
+
+    def forward(self, preds, targets):
+        """
+        preds: {"one2many": [...], "one2one": [...]}
+        targets: (image_idx, class, x, y, w, h) normalized
+        """
+        loss_o2m = self._compute_loss(preds["one2many"], targets, self.assigner_o2m)
+        loss_o2o = self._compute_loss(preds["one2one"], targets, self.assigner_o2o)
+
+        total_loss = loss_o2m + self.o2o_weight * loss_o2o
+        return total_loss
+
+    def _compute_loss(self, preds, targets, assigner):
+        """개별 head에 대한 box + cls + dfl loss 계산 (기존 YOLOv9 loss와 구조 동일)"""
+        # feature map들을 flatten
+        pred_distri_list = []
+        pred_scores_list = []
+        for pi in preds:
+            b, c, h, w = pi.shape
+            pi = pi.view(b, self.no, h * w).permute(0, 2, 1)
+            pred_distri_list.append(pi[..., :self.reg_max * 4])
+            pred_scores_list.append(pi[..., self.reg_max * 4:])
+
+        pred_distri = torch.cat(pred_distri_list, dim=1)
+        pred_scores = torch.cat(pred_scores_list, dim=1).sigmoid()
+
+        # anchor points 생성
+        anchor_points, stride_tensor = self._make_anchors(preds)
+
+        # targets → (batch_idx, cls, bbox) 분리
+        gt_labels, gt_bboxes, mask_gt = self._preprocess_targets(targets, b)
+
+        # assigner로 매칭
+        assigned = assigner(pred_scores, pred_distri_decoded,
+                           anchor_points, gt_labels, gt_bboxes, mask_gt)
+
+        # box loss (CIoU) + cls loss (BCE) + dfl loss
+        loss_box = ...  # CIoU loss on matched pairs
+        loss_cls = ...  # BCE on all anchors
+        loss_dfl = ...  # Distribution Focal Loss
+
+        return (loss_box * self.box_gain +
+                loss_cls * self.cls_gain +
+                loss_dfl * self.dfl_gain)
