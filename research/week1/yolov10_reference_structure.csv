@@ -1,0 +1,23 @@
+module,file,line,matched_code
+YOLOv10 Head,ultralytics/nn/modules/head.py,464,refer_bbox = refer_bbox.detach()
+YOLOv10 Head,ultralytics/nn/modules/head.py,466,embeddings = embeddings.detach()
+YOLOv10 Head,ultralytics/nn/modules/head.py,497,class v10Detect(Detect):
+YOLOv10 Head,ultralytics/nn/modules/head.py,499,max_det = 300
+YOLOv10 Head,ultralytics/nn/modules/head.py,508,self.one2one_cv2 = copy.deepcopy(self.cv2)
+YOLOv10 Head,ultralytics/nn/modules/head.py,509,self.one2one_cv3 = copy.deepcopy(self.cv3)
+YOLOv10 Head,ultralytics/nn/modules/head.py,512,"one2one = self.forward_feat([xi.detach() for xi in x], self.one2one_cv2, self.one2one_cv3)"
+YOLOv10 Head,ultralytics/nn/modules/head.py,512,"one2one = self.forward_feat([xi.detach() for xi in x], self.one2one_cv2, self.one2one_cv3)"
+YOLOv10 Head,ultralytics/nn/modules/head.py,514,one2many = super().forward(x)
+YOLOv10 Head,ultralytics/nn/modules/head.py,517,one2one = self.inference(one2one)
+YOLOv10 Head,ultralytics/nn/modules/head.py,519,"return {""one2many"": one2many, ""one2one"": one2one}"
+YOLOv10 Head,ultralytics/nn/modules/head.py,519,"return {""one2many"": one2many, ""one2one"": one2one}"
+YOLOv10 Head,ultralytics/nn/modules/head.py,521,assert(self.max_det != -1)
+YOLOv10 Head,ultralytics/nn/modules/head.py,522,"boxes, scores, labels = ops.v10postprocess(one2one.permute(0, 2, 1), self.max_det, self.nc)"
+YOLOv10 Head,ultralytics/nn/modules/head.py,522,"boxes, scores, labels = ops.v10postprocess(one2one.permute(0, 2, 1), self.max_det, self.nc)"
+YOLOv10 Head,ultralytics/nn/modules/head.py,522,"boxes, scores, labels = ops.v10postprocess(one2one.permute(0, 2, 1), self.max_det, self.nc)"
+YOLOv10 Head,ultralytics/nn/modules/head.py,525,"return {""one2many"": one2many, ""one2one"": one2one}"
+YOLOv10 Head,ultralytics/nn/modules/head.py,525,"return {""one2many"": one2many, ""one2one"": one2one}"
+YOLOv10 Head,ultralytics/nn/modules/head.py,533,"for a, b, s in zip(m.one2one_cv2, m.one2one_cv3, m.stride):  # from"
+YOLOv10 Predictor,ultralytics/models/yolov10/predict.py,10,"preds = preds[""one2one""]"
+YOLOv10 Predictor,ultralytics/models/yolov10/predict.py,19,"bboxes, scores, labels = ops.v10postprocess(preds, self.args.max_det, preds.shape[-1]-4)"
+YOLOv10 Predictor,ultralytics/models/yolov10/predict.py,19,"bboxes, scores, labels = ops.v10postprocess(preds, self.args.max_det, preds.shape[-1]-4)"

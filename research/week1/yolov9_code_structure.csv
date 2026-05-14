@@ -1,0 +1,25 @@
+module,file,line,matched_code
+YOLOv9 Head,models/yolo.py,29,class Detect(nn.Module):
+YOLOv9 Head,models/yolo.py,78,class DDetect(nn.Module):
+YOLOv9 Head,models/yolo.py,127,class DualDetect(nn.Module):
+YOLOv9 Head,models/yolo.py,190,class DualDDetect(nn.Module):
+YOLOv9 Head,models/yolo.py,580,class DetectionModel(BaseModel):
+YOLOv9 Dual Loss,utils/loss_tal_dual.py,10,from utils.tal.assigner import TaskAlignedAssigner
+YOLOv9 Dual Loss,utils/loss_tal_dual.py,106,class ComputeLoss:
+YOLOv9 Dual Loss,utils/loss_tal_dual.py,134,"self.assigner = TaskAlignedAssigner(topk=int(os.getenv('YOLOM', 10)),"
+YOLOv9 Dual Loss,utils/loss_tal_dual.py,138,"self.assigner2 = TaskAlignedAssigner(topk=int(os.getenv('YOLOM', 10)),"
+YOLOv9 Dual Loss,utils/loss_tal_dual.py,254,class ComputeLossLH:
+YOLOv9 Dual Loss,utils/loss_tal_dual.py,282,"self.assigner = TaskAlignedAssigner(topk=int(os.getenv('YOLOM', 10)),"
+YOLOv9 Train Dual,train_dual.py,257,compute_loss = ComputeLoss(model)  # init loss class
+YOLOv9 Train Dual,train_dual.py,296,"# compute_loss.gr = np.interp(ni, xi, [0.0, 1.0])  # iou loss ratio (obj_loss = 1.0 or iou)"
+YOLOv9 Train Dual,train_dual.py,315,"loss, loss_items = compute_loss(pred, targets.to(device))  # loss scaled by batch_size"
+YOLOv9 Train Dual,train_dual.py,366,compute_loss=compute_loss)
+YOLOv9 Train Dual,train_dual.py,428,compute_loss=compute_loss)  # val best model with plots
+YOLOv9 Val Dual,val_dual.py,21,"check_yaml, coco80_to_coco91_class, colorstr, increment_path, non_max_suppression,"
+YOLOv9 Val Dual,val_dual.py,106,"compute_loss=None,"
+YOLOv9 Val Dual,val_dual.py,191,"preds, train_out = model(im) if compute_loss else (model(im, augment=augment), None)"
+YOLOv9 Val Dual,val_dual.py,194,if compute_loss:
+YOLOv9 Val Dual,val_dual.py,197,"#loss += compute_loss(train_out, targets)[1]  # box, obj, cls"
+YOLOv9 Val Dual,val_dual.py,205,"preds = non_max_suppression(preds,"
+YOLOv9 Detect Dual,detect_dual.py,18,"increment_path, non_max_suppression, print_args, scale_boxes, strip_optimizer, xyxy2xywh)"
+YOLOv9 Detect Dual,detect_dual.py,103,"pred = non_max_suppression(pred, conf_thres, iou_thres, classes, agnostic_nms, max_det=max_det)"
