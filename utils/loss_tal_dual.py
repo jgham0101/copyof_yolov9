@@ -121,6 +121,9 @@ class ComputeLoss:
             BCEcls = FocalLoss(BCEcls, g)
 
         m = de_parallel(model).model[-1]  # Detect() module
+        self.is_v10dual = m.__class__.__name__ == 'V10DualDDetect'
+        o2m_topk = int(os.getenv('YOLOM', 10))
+        o2o_topk = int(os.getenv('YOLOO', 1 if self.is_v10dual else o2m_topk))
         self.balance = {3: [4.0, 1.0, 0.4]}.get(m.nl, [4.0, 1.0, 0.25, 0.06, 0.02])  # P3-P7
         self.BCEcls = BCEcls
         self.hyp = h
@@ -131,11 +134,11 @@ class ComputeLoss:
         self.reg_max = m.reg_max
         self.device = device
 
-        self.assigner = TaskAlignedAssigner(topk=int(os.getenv('YOLOM', 10)),
+        self.assigner = TaskAlignedAssigner(topk=o2m_topk,
                                             num_classes=self.nc,
                                             alpha=float(os.getenv('YOLOA', 0.5)),
                                             beta=float(os.getenv('YOLOB', 6.0)))
-        self.assigner2 = TaskAlignedAssigner(topk=int(os.getenv('YOLOM', 10)),
+        self.assigner2 = TaskAlignedAssigner(topk=o2o_topk,
                                             num_classes=self.nc,
                                             alpha=float(os.getenv('YOLOA', 0.5)),
                                             beta=float(os.getenv('YOLOB', 6.0)))
@@ -169,8 +172,12 @@ class ComputeLoss:
 
     def __call__(self, p, targets, img=None, epoch=0):
         loss = torch.zeros(3, device=self.device)  # box, cls, dfl
-        feats = p[1][0] if isinstance(p, tuple) else p[0]
-        feats2 = p[1][1] if isinstance(p, tuple) else p[1]
+        if isinstance(p, dict):
+            feats, feats2 = p['one2many'], p['one2one']
+        elif isinstance(p, tuple):
+            feats, feats2 = p[1][0], p[1][1]
+        else:
+            feats, feats2 = p[0], p[1]
         
         pred_distri, pred_scores = torch.cat([xi.view(feats[0].shape[0], self.no, -1) for xi in feats], 2).split(
             (self.reg_max * 4, self.nc), 1)
@@ -279,7 +286,7 @@ class ComputeLossLH:
         self.reg_max = m.reg_max
         self.device = device
 
-        self.assigner = TaskAlignedAssigner(topk=int(os.getenv('YOLOM', 10)),
+        self.assigner = TaskAlignedAssigner(topk=o2m_topk,
                                             num_classes=self.nc,
                                             alpha=float(os.getenv('YOLOA', 0.5)),
                                             beta=float(os.getenv('YOLOB', 6.0)))
