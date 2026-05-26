@@ -1,0 +1,12 @@
+{
+  "dataset": "COCO128",
+  "data_yaml": "data/coco128.yaml",
+  "imgsz": 320,
+  "batch": 4,
+  "epochs": 1,
+  "workers": 2,
+  "hyp": "hyp.scratch-high.yaml",
+  "baseline_cfg": "models/detect/yolov9-s.yaml",
+  "proposed_cfg": "models/detect/yolov9-s-v10dual.yaml",
+  "note": "Free Colab smoke-scale comparison. Not final paper result."
+}
