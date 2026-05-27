@@ -1,0 +1,18 @@
+{
+  "week": 7,
+  "dataset": "COCO128",
+  "data_yaml": "data/coco128.yaml",
+  "imgsz": 320,
+  "batch": 4,
+  "epochs": 3,
+  "workers": 2,
+  "hyp": "hyp.scratch-high.yaml",
+  "baseline_cfg": "models/detect/yolov9-s.yaml",
+  "proposed_cfg": "models/detect/yolov9-s-v10dual.yaml",
+  "baseline_name": "week7_baseline_yolov9s_coco128_e3",
+  "proposed_name": "week7_proposed_v10dual_coco128_e3",
+  "baseline_eval_name": "week7_baseline_yolov9s_nms_eval",
+  "proposed_no_nms_eval_name": "week7_proposed_no_nms_eval",
+  "proposed_nms_eval_name": "week7_proposed_nms_eval",
+  "note": "Free Colab extended smoke experiment; not full COCO."
+}
