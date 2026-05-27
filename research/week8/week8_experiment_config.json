@@ -1,0 +1,17 @@
+{
+  "week": 8,
+  "dataset": "COCO128",
+  "data_yaml": "data/coco128.yaml",
+  "imgsz": 320,
+  "batch": 4,
+  "epochs": 10,
+  "workers": 2,
+  "hyp": "hyp.scratch-high.yaml",
+  "baseline_cfg": "models/detect/yolov9-s.yaml",
+  "proposed_cfg": "models/detect/yolov9-s-v10dual.yaml",
+  "baseline_name": "week8_baseline_yolov9s_coco128_e10",
+  "proposed_name": "week8_proposed_v10dual_coco128_e10",
+  "baseline_eval_name": "week8_baseline_yolov9s_nms_eval",
+  "proposed_no_nms_eval_name": "week8_proposed_no_nms_eval",
+  "proposed_nms_eval_name": "week8_proposed_nms_eval"
+}
