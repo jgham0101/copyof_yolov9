@@ -1,0 +1,23 @@
+{
+  "week": 9,
+  "dataset": "COCO2017 subset",
+  "subset_name": "coco2017_subset_train5k_val1k_seed42",
+  "train_images": 5000,
+  "val_images": 1000,
+  "seed": 42,
+  "min_train_images_per_class": 30,
+  "min_val_images_per_class": 5,
+  "data_yaml": "data/coco2017_subset_5k.yaml",
+  "imgsz": 320,
+  "batch": 4,
+  "epochs": 10,
+  "workers": 2,
+  "hyp": "hyp.scratch-high.yaml",
+  "baseline_cfg": "models/detect/yolov9-s.yaml",
+  "proposed_cfg": "models/detect/yolov9-s-v10dual.yaml",
+  "baseline_name": "week9_baseline_yolov9s_coco_subset5k_e10",
+  "proposed_name": "week9_proposed_v10dual_coco_subset5k_e10",
+  "baseline_eval_name": "week9_baseline_yolov9s_nms_eval",
+  "proposed_no_nms_eval_name": "week9_proposed_no_nms_eval",
+  "proposed_nms_eval_name": "week9_proposed_nms_eval"
+}
