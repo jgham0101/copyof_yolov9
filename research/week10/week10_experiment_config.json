@@ -1,0 +1,19 @@
+{
+  "week": 10,
+  "dataset": "PASCAL VOC2007",
+  "dataset_root": "/content/datasets/voc2007_yolo",
+  "data_yaml": "data/voc2007.yaml",
+  "classes": 20,
+  "imgsz": 320,
+  "batch": 4,
+  "epochs": 10,
+  "workers": 2,
+  "hyp": "hyp.scratch-high.yaml",
+  "baseline_cfg": "models/detect/yolov9-s.yaml",
+  "proposed_cfg": "models/detect/yolov9-s-v10dual.yaml",
+  "baseline_name": "week10_baseline_yolov9s_voc2007_e10",
+  "proposed_name": "week10_proposed_v10dual_voc2007_e10",
+  "baseline_eval_name": "week10_baseline_yolov9s_nms_eval",
+  "proposed_no_nms_eval_name": "week10_proposed_no_nms_eval",
+  "proposed_nms_eval_name": "week10_proposed_nms_eval"
+}
