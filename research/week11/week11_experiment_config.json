@@ -1,0 +1,16 @@
+{
+  "week": 11,
+  "dataset": "COCO2017 subset 5k/1k",
+  "dataset_root": "/content/datasets/coco2017_subset_5k",
+  "data_yaml": "data/coco2017_subset_5k.yaml",
+  "imgsz": 320,
+  "batch": 4,
+  "workers": 2,
+  "baseline_weight_hint": "week9_baseline_yolov9s_coco_subset5k_e10",
+  "proposed_weight_hint": "week9_proposed_v10dual_coco_subset5k_e10",
+  "baseline_eval_name": "week11_baseline_reference_nms_eval",
+  "proposed_native_eval_name": "week11_proposed_native_val_dual_eval",
+  "proposed_one2one_nms_eval_name": "week11_proposed_one2one_nms_eval",
+  "proposed_one2one_no_nms_eval_name": "week11_proposed_one2one_no_nms_eval",
+  "note": "Branch-level diagnosis for mAP drop source localization."
+}
