@@ -1,14 +1,24 @@
-
 from __future__ import annotations
 
 from pathlib import Path
 import argparse
 import json
 import re
+
 import pandas as pd
 
 
-def parse_float_list(line: str):
+ANSI_RE = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
+
+
+def clean_log_text(text: str) -> str:
+    """Remove ANSI escape codes and normalize progress-bar carriage returns."""
+    text = ANSI_RE.sub("", text)
+    text = text.replace("\r", "\n")
+    return text
+
+
+def numeric_tokens(line: str) -> list[float]:
     vals = []
     for token in line.strip().split():
         try:
@@ -18,9 +28,22 @@ def parse_float_list(line: str):
     return vals
 
 
-def parse_val_log(path: Path, model: str, postprocess: str, label: str) -> dict:
-    text = path.read_text(encoding="utf-8", errors="ignore") if path.exists() else ""
-    metrics = {
+def parse_val_dual_log(path: Path, model: str, postprocess: str, label: str) -> dict:
+    """
+    Parse YOLO val_dual.py terminal log.
+
+    Expected result line:
+        all 1000 8307 0.556 0.0356 0.0293 0.0158
+
+    Expected speed line:
+        Speed: 0.1ms pre-process, 10.4ms inference, 1.9ms NMS per image ...
+    """
+    if not path.exists():
+        raise FileNotFoundError(f"missing validation log: {path}")
+
+    text = clean_log_text(path.read_text(encoding="utf-8", errors="ignore"))
+
+    row = {
         "label": label,
         "model": model,
         "postprocess": postprocess,
@@ -36,38 +59,69 @@ def parse_val_log(path: Path, model: str, postprocess: str, label: str) -> dict:
         "source": str(path),
     }
 
-    for line in reversed(text.splitlines()):
-        if re.search(r"\\ball\\b", line):
-            nums = parse_float_list(line)
+    all_candidates = []
+
+    for line in text.splitlines():
+        if re.search(r"\ball\b", line):
+            nums = numeric_tokens(line)
+
+            # Use last 6 numbers:
+            # Images, Instances, P, R, mAP50, mAP50-95
             if len(nums) >= 6:
-                metrics["images"] = int(nums[-6])
-                metrics["instances"] = int(nums[-5])
-                metrics["precision"] = nums[-4]
-                metrics["recall"] = nums[-3]
-                metrics["map50"] = nums[-2]
-                metrics["map50_95"] = nums[-1]
-                break
-            elif len(nums) >= 4:
-                metrics["precision"] = nums[-4]
-                metrics["recall"] = nums[-3]
-                metrics["map50"] = nums[-2]
-                metrics["map50_95"] = nums[-1]
-                break
+                all_candidates.append((line, nums))
 
-    speed_match = re.search(
-        r"Speed:\\s*([0-9.]+)ms pre-process,\\s*([0-9.]+)ms inference,\\s*([0-9.]+)ms NMS",
-        text,
+    if not all_candidates:
+        tail = "\n".join(text.splitlines()[-80:])
+        raise RuntimeError(
+            f"could not parse 'all' metric line from {path}\n"
+            f"--- log tail ---\n{tail}"
+        )
+
+    all_line, nums = all_candidates[-1]
+    row["images"] = int(nums[-6])
+    row["instances"] = int(nums[-5])
+    row["precision"] = float(nums[-4])
+    row["recall"] = float(nums[-3])
+    row["map50"] = float(nums[-2])
+    row["map50_95"] = float(nums[-1])
+
+    speed_matches = list(
+        re.finditer(
+            r"Speed:\s*([0-9.]+)ms pre-process,\s*([0-9.]+)ms inference,\s*([0-9.]+)ms NMS",
+            text,
+        )
     )
-    if speed_match:
-        metrics["preprocess_ms"] = float(speed_match.group(1))
-        metrics["inference_ms"] = float(speed_match.group(2))
-        metrics["postprocess_ms"] = float(speed_match.group(3))
 
-    return metrics
+    if not speed_matches:
+        tail = "\n".join(text.splitlines()[-80:])
+        raise RuntimeError(
+            f"could not parse Speed line from {path}\n"
+            f"--- log tail ---\n{tail}"
+        )
+
+    speed = speed_matches[-1]
+    row["preprocess_ms"] = float(speed.group(1))
+    row["inference_ms"] = float(speed.group(2))
+    row["postprocess_ms"] = float(speed.group(3))
+
+    print(f"[parsed] {label}")
+    print("  all line:", all_line)
+    print(
+        "  speed:",
+        row["preprocess_ms"],
+        row["inference_ms"],
+        row["postprocess_ms"],
+    )
+
+    return row
 
 
 def parse_metrics_json(path: Path, model: str, label: str) -> dict:
+    if not path.exists():
+        raise FileNotFoundError(f"missing metrics json: {path}")
+
     data = json.loads(path.read_text(encoding="utf-8"))
+
     return {
         "label": label,
         "model": model,
@@ -85,9 +139,31 @@ def parse_metrics_json(path: Path, model: str, label: str) -> dict:
     }
 
 
-def latest(root: Path, pattern: str):
-    ms = sorted(root.rglob(pattern))
-    return ms[-1] if ms else None
+def latest(paths: list[Path]) -> Path | None:
+    paths = [p for p in paths if p.exists()]
+    return sorted(paths)[-1] if paths else None
+
+
+def find_metrics_json(repo: Path, drive: Path, run_name: str) -> Path:
+    """
+    Prefer Drive runs_backup because Colab runtime may be fresh.
+    Fall back to local repo/runs/val.
+    """
+    candidates = []
+
+    candidates.extend((drive / "runs_backup").glob(f"{run_name}*/metrics.json"))
+    candidates.extend((repo / "runs/val").glob(f"{run_name}*/metrics.json"))
+
+    selected = latest(candidates)
+    if selected is None:
+        searched = [
+            str(drive / "runs_backup" / f"{run_name}*/metrics.json"),
+            str(repo / "runs/val" / f"{run_name}*/metrics.json"),
+        ]
+        raise FileNotFoundError(f"metrics.json not found for {run_name}. searched={searched}")
+
+    print(f"[selected metrics] {run_name}: {selected}")
+    return selected
 
 
 def main():
@@ -100,36 +176,85 @@ def main():
     drive = Path(args.drive)
     repo = Path(args.repo)
 
-    rows = []
-
     baseline_log = drive / "logs" / "week11_baseline_reference_val_dual.log"
     proposed_native_log = drive / "logs" / "week11_proposed_native_val_dual.log"
 
-    rows.append(parse_val_log(baseline_log, "baseline_yolov9_s", "nms", "baseline_nms_reference"))
-    rows.append(parse_val_log(proposed_native_log, "proposed_v10dual", "native-val_dual-nms", "proposed_native_val_dual"))
+    one2one_nms_json = find_metrics_json(
+        repo,
+        drive,
+        "week11_proposed_one2one_nms_eval",
+    )
 
-    one2one_no = latest(repo, "week11_proposed_one2one_no_nms_eval*/metrics.json")
-    one2one_nms = latest(repo, "week11_proposed_one2one_nms_eval*/metrics.json")
+    one2one_no_nms_json = find_metrics_json(
+        repo,
+        drive,
+        "week11_proposed_one2one_no_nms_eval",
+    )
 
-    if one2one_nms:
-        rows.append(parse_metrics_json(one2one_nms, "proposed_v10dual", "proposed_one2one_nms"))
-    if one2one_no:
-        rows.append(parse_metrics_json(one2one_no, "proposed_v10dual", "proposed_one2one_no_nms"))
+    rows = [
+        parse_val_dual_log(
+            baseline_log,
+            model="baseline_yolov9_s",
+            postprocess="nms",
+            label="baseline_nms_reference",
+        ),
+        parse_val_dual_log(
+            proposed_native_log,
+            model="proposed_v10dual",
+            postprocess="native-val_dual-nms",
+            label="proposed_native_val_dual",
+        ),
+        parse_metrics_json(
+            one2one_nms_json,
+            model="proposed_v10dual",
+            label="proposed_one2one_nms",
+        ),
+        parse_metrics_json(
+            one2one_no_nms_json,
+            model="proposed_v10dual",
+            label="proposed_one2one_no_nms",
+        ),
+    ]
 
     df = pd.DataFrame(rows)
 
-    numeric = ["precision", "recall", "map50", "map50_95", "preprocess_ms", "inference_ms", "postprocess_ms"]
-    for col in numeric:
+    numeric_cols = [
+        "images",
+        "instances",
+        "precision",
+        "recall",
+        "map50",
+        "map50_95",
+        "preprocess_ms",
+        "inference_ms",
+        "postprocess_ms",
+    ]
+
+    for col in numeric_cols:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce")
 
-    if {"preprocess_ms", "inference_ms", "postprocess_ms"}.issubset(df.columns):
-        df["total_ms"] = df[["preprocess_ms", "inference_ms", "postprocess_ms"]].sum(axis=1, skipna=False)
+    df["total_ms"] = df[["preprocess_ms", "inference_ms", "postprocess_ms"]].sum(
+        axis=1,
+        skipna=False,
+    )
+
+    metric_cols = ["precision", "recall", "map50", "map50_95"]
+    if df[metric_cols].isna().any().any():
+        raise RuntimeError(f"NaN remains in metric columns:\n{df}")
+
+    latency_cols = ["preprocess_ms", "inference_ms", "postprocess_ms"]
+    if df[latency_cols].isna().any().any():
+        raise RuntimeError(f"NaN remains in latency columns:\n{df}")
 
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
+
     df.to_csv(out, index=False)
-    out.with_suffix(".json").write_text(json.dumps(rows, indent=2), encoding="utf-8")
+    out.with_suffix(".json").write_text(
+        json.dumps(rows, indent=2),
+        encoding="utf-8",
+    )
 
     print(df)
     print("saved:", out)
