@@ -1,0 +1,23 @@
+{
+  "week": 12,
+  "dataset": "COCO2017 subset 5k/1k",
+  "dataset_root": "/content/datasets/coco2017_subset_5k",
+  "data_yaml": "data/coco2017_subset_5k.yaml",
+  "imgsz": 320,
+  "batch": 4,
+  "workers": 2,
+  "sample_n": 24,
+  "seed": 42,
+  "conf_thresholds": [
+    0.001,
+    0.005,
+    0.01,
+    0.025,
+    0.05,
+    0.1,
+    0.25
+  ],
+  "iou_thres": 0.7,
+  "max_det": 300,
+  "note": "Prediction visualization and confidence diagnosis after Week 11 branch diagnosis."
+}
