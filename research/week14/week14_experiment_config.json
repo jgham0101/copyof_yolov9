@@ -1,0 +1,24 @@
+{
+  "week": 14,
+  "mini_root": "/content/datasets/week13_mini32_overfit",
+  "data_yaml": "data/week13_mini32_overfit.yaml",
+  "imgsz": 320,
+  "batch": 4,
+  "workers": 2,
+  "seed": 42,
+  "finetune_epochs": 60,
+  "continue_epochs": 60,
+  "proposed_from_baseline_name": "week14_proposed_from_baseline_mini32",
+  "proposed_continue_name": "week14_proposed_continue_mini32",
+  "baseline_cfg": "models/detect/yolov9-s.yaml",
+  "proposed_cfg": "models/detect/yolov9-s-v10dual.yaml",
+  "conf_sweep": [
+    0.001,
+    0.01,
+    0.05,
+    0.1,
+    0.25
+  ],
+  "iou_thres": 0.7,
+  "max_det": 300
+}
