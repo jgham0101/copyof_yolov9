@@ -1,0 +1,23 @@
+{
+  "week": 13,
+  "source_dataset_root": "/content/datasets/coco2017_subset_5k",
+  "mini_root": "/content/datasets/week13_mini32_overfit",
+  "data_yaml": "data/week13_mini32_overfit.yaml",
+  "train_n": 32,
+  "heldout_n": 32,
+  "imgsz": 320,
+  "batch": 4,
+  "epochs": 120,
+  "workers": 2,
+  "seed": 42,
+  "baseline_name": "week13_baseline_mini32_overfit",
+  "proposed_name": "week13_proposed_v10dual_mini32_overfit",
+  "baseline_cfg": "models/detect/yolov9-s.yaml",
+  "proposed_cfg": "models/detect/yolov9-s-v10dual.yaml",
+  "conf_eval_list": [
+    0.001,
+    0.1
+  ],
+  "iou_thres": 0.7,
+  "max_det": 300
+}
