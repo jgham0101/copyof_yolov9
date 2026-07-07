@@ -1,0 +1,21 @@
+{
+  "week": 15,
+  "data_yaml": "data/week13_mini32_overfit.yaml",
+  "hyp": "data/hyps/hyp.week13-overfit.yaml",
+  "imgsz": 320,
+  "batch": 4,
+  "workers": 2,
+  "epochs": 60,
+  "proposed_cfg": "models/detect/yolov9-s-v10dual.yaml",
+  "conf_sweep": [
+    0.001,
+    0.01,
+    0.05,
+    0.1,
+    0.25
+  ],
+  "iou_thres": 0.7,
+  "max_det": 300,
+  "one2one_copy_run_name": "week15_one2one_copy_init_mini32",
+  "detach_off_run_name": "week15_detach_off_from_baseline_mini32"
+}
