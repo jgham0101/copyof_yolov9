@@ -1,0 +1,26 @@
+{
+  "week": 16,
+  "dataset": "COCO128",
+  "data_yaml": "data/week16_coco128.yaml",
+  "imgsz": 640,
+  "batch": 8,
+  "workers": 2,
+  "epochs": 50,
+  "baseline_cfg": "models/detect/yolov9-s.yaml",
+  "proposed_cfg": "models/detect/yolov9-s-v10dual.yaml",
+  "conf_sweep": [
+    0.001,
+    0.01,
+    0.05,
+    0.1,
+    0.25
+  ],
+  "iou_thres": 0.7,
+  "max_det": 300,
+  "runs": {
+    "baseline": "week16_baseline_yolov9s_coco128",
+    "proposed_scratch": "week16_proposed_scratch_coco128",
+    "proposed_from_baseline": "week16_proposed_from_baseline_coco128",
+    "proposed_one2one_copy": "week16_proposed_one2one_copy_coco128"
+  }
+}
