@@ -1,0 +1,31 @@
+{
+  "week": 17,
+  "data_yaml": "data/week17_coco128.yaml",
+  "imgsz": 640,
+  "batch": 8,
+  "workers": 2,
+  "epochs_long": 100,
+  "proposed_cfg": "models/detect/yolov9-s-v10dual.yaml",
+  "hyp_high": "data/hyps/hyp.week17-coco128-highaug.yaml",
+  "hyp_low": "data/hyps/hyp.week17-coco128-lowaug.yaml",
+  "long_run_name": "week17_one2one_copy_long100_coco128",
+  "lowaug_run_name": "week17_one2one_copy_lowaug100_coco128",
+  "conf_sweep": [
+    0.0001,
+    0.0005,
+    0.001,
+    0.002,
+    0.005,
+    0.01,
+    0.05,
+    0.25
+  ],
+  "probe_conf": [
+    0.0001,
+    0.001,
+    0.01,
+    0.1
+  ],
+  "iou_thres": 0.7,
+  "max_det": 300
+}
