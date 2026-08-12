@@ -1,0 +1,41 @@
+{
+  "week": 19,
+  "title": "Same-feature Dual Head / Gradient Path / YOLOv10 Alignment Audit",
+  "data_yaml": "data/week19_coco128.yaml",
+  "hyp_low": "data/hyps/hyp.week19-coco128-lowaug.yaml",
+  "current_cfg": "models/detect/yolov9-s-v10dual.yaml",
+  "samefeat_cfg": "models/detect/yolov9-s-v10dual-samefeat.yaml",
+  "imgsz": 640,
+  "batch": 8,
+  "workers": 2,
+  "seed": 0,
+  "screen_epochs": 10,
+  "assigner": {
+    "o2m_topk": 10,
+    "o2o_topk": 1,
+    "alpha": 0.5,
+    "beta": 6.0
+  },
+  "variants": {
+    "A_current_split_w025": {
+      "cfg": "models/detect/yolov9-s-v10dual.yaml",
+      "copy_init": false,
+      "o2m_loss_weight": 0.25
+    },
+    "B_samefeat_w025": {
+      "cfg": "models/detect/yolov9-s-v10dual-samefeat.yaml",
+      "copy_init": false,
+      "o2m_loss_weight": 0.25
+    },
+    "C_samefeat_copy_w025": {
+      "cfg": "models/detect/yolov9-s-v10dual-samefeat.yaml",
+      "copy_init": true,
+      "o2m_loss_weight": 0.25
+    },
+    "D_samefeat_copy_w100": {
+      "cfg": "models/detect/yolov9-s-v10dual-samefeat.yaml",
+      "copy_init": true,
+      "o2m_loss_weight": 1.0
+    }
+  }
+}

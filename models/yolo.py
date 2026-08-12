@@ -313,6 +313,11 @@ class V10DualDDetect(nn.Module):
             for x in ch[self.nl:]
         )
 
+        self.copy_one2one_init = __import__("os").getenv("V10_COPY_INIT", "0") == "1"  # WEEK19_COPY_INIT_PATCH
+        if self.copy_one2one_init:
+            self.one2one_cv2.load_state_dict(self.cv2.state_dict(), strict=True)
+            self.one2one_cv3.load_state_dict(self.cv3.state_dict(), strict=True)
+
         self.dfl = DFL(self.reg_max)
         self.dfl2 = DFL(self.reg_max)
 

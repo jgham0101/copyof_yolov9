@@ -124,6 +124,7 @@ class ComputeLoss:
         self.is_v10dual = m.__class__.__name__ == 'V10DualDDetect'
         o2m_topk = int(os.getenv('YOLOM', 10))
         o2o_topk = int(os.getenv('YOLOO', 1 if self.is_v10dual else o2m_topk))
+        self.o2m_loss_weight = float(os.getenv("YOLO_O2M_LOSS_WEIGHT", "0.25"))  # WEEK19_O2M_WEIGHT_PATCH
         self.balance = {3: [4.0, 1.0, 0.4]}.get(m.nl, [4.0, 1.0, 0.25, 0.06, 0.02])  # P3-P7
         self.BCEcls = BCEcls
         self.hyp = h
@@ -227,8 +228,7 @@ class ComputeLoss:
         # WEEK18_TELEMETRY_PATCH: keep original math but expose separate branch components.
         loss_cls_o2m = self.BCEcls(pred_scores, target_scores.to(dtype)).sum() / target_scores_sum  # BCE
         loss_cls_o2o = self.BCEcls(pred_scores2, target_scores2.to(dtype)).sum() / target_scores_sum2  # BCE
-        loss[1] = loss_cls_o2m
-        loss[1] *= 0.25
+        loss[1] = loss_cls_o2m * self.o2m_loss_weight
         loss[1] += loss_cls_o2o
 
         # bbox loss
@@ -246,8 +246,8 @@ class ComputeLoss:
                                                              target_scores,
                                                              target_scores_sum,
                                                              fg_mask)
-            loss[0] = loss_box_o2m * 0.25
-            loss[2] = loss_dfl_o2m * 0.25
+            loss[0] = loss_box_o2m * self.o2m_loss_weight
+            loss[2] = loss_dfl_o2m * self.o2m_loss_weight
 
         if fg_mask2.sum():
             loss_box_o2o, loss_dfl_o2o, iou2 = self.bbox_loss2(pred_distri2,
