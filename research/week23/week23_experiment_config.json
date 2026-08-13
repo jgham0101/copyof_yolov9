@@ -1,0 +1,48 @@
+{
+  "week": 23,
+  "title": "Positive Promotion vs Hard-Competitor Suppression",
+  "data_yaml": "data/week20_coco128.yaml",
+  "hyp_low": "data/hyps/hyp.week20-coco128-lowaug.yaml",
+  "cfg": "models/detect/yolov9-s-v10dual-samefeat.yaml",
+  "base_weight": "/content/drive/MyDrive/yolo_v9_v10_e2e_research/week20_long_convergence_official_topk/runs_backup/week20_B_samefeat_w025_e100_coco128/weights/last.pt",
+  "epochs": 20,
+  "imgsz": 640,
+  "batch": 8,
+  "workers": 2,
+  "seed": 0,
+  "o2m_weight": 0.25,
+  "rank_weight": 0.1,
+  "rank_iou": 0.5,
+  "conf_sweep": [
+    0.0001,
+    0.0005,
+    0.001,
+    0.002,
+    0.005,
+    0.01,
+    0.05,
+    0.1,
+    0.25
+  ],
+  "box_probe_conf": [
+    0.005,
+    0.01,
+    0.05
+  ],
+  "all_variants": [
+    "control_continue20",
+    "pairwise_continue20",
+    "positive_only_continue20",
+    "negative_only_continue20"
+  ],
+  "train_variants": {
+    "positive_only_continue20": {
+      "mode": "positive_only",
+      "run_name": "week23_positive_only_continue20_from_B100"
+    },
+    "negative_only_continue20": {
+      "mode": "negative_only",
+      "run_name": "week23_negative_only_continue20_from_B100"
+    }
+  }
+}

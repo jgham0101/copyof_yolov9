@@ -145,6 +145,9 @@ class ComputeLoss:
                                             beta=float(os.getenv('YOLOB', 6.0)))
         self.rep_rank_weight = float(os.getenv("YOLO_REP_RANK_WEIGHT", "0.0"))  # WEEK22_REP_RANK_PATCH
         self.rep_rank_iou_threshold = float(os.getenv("YOLO_REP_RANK_IOU", "0.5"))
+        self.rep_rank_mode = os.getenv("YOLO_REP_RANK_MODE", "pairwise").strip().lower()  # WEEK23_GRADIENT_MODE_PATCH
+        if self.rep_rank_mode not in {"pairwise", "positive_only", "negative_only"}:
+            raise ValueError(f"Unsupported YOLO_REP_RANK_MODE={self.rep_rank_mode}")
         self.rep_rank_telemetry = os.getenv("YOLO_REP_RANK_TELEMETRY", "")
         self.rep_rank_telemetry_every = max(1, int(os.getenv("YOLO_REP_RANK_TELEMETRY_EVERY", "20")))
         self.bbox_loss = BboxLoss(m.reg_max - 1, use_dfl=use_dfl).to(device)
@@ -400,9 +403,23 @@ class ComputeLoss:
                     b, neg_anchor, cls
                 ]
 
+                # WEEK23_GRADIENT_MODE_PATCH:
+                # Same mined pair; only gradient destination changes.
+                if self.rep_rank_mode == "positive_only":
+                    pos_for_loss = pos_logit
+                    neg_for_loss = neg_logit.detach()
+
+                elif self.rep_rank_mode == "negative_only":
+                    pos_for_loss = pos_logit.detach()
+                    neg_for_loss = neg_logit
+
+                else:  # pairwise
+                    pos_for_loss = pos_logit
+                    neg_for_loss = neg_logit
+
                 pair_loss = torch.nn.functional.softplus(
-                    neg_logit
-                    - pos_logit
+                    neg_for_loss
+                    - pos_for_loss
                 )
 
                 total = (
