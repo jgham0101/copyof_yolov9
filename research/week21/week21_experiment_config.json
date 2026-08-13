@@ -1,0 +1,25 @@
+{
+  "week": 21,
+  "title": "O2O Assignment & Uniqueness Contract Audit",
+  "data_yaml": "data/week20_coco128.yaml",
+  "imgsz": 640,
+  "batch": 8,
+  "workers": 2,
+  "max_images": 128,
+  "variants": {
+    "B_samefeat_w025": {
+      "weight": "/content/drive/MyDrive/yolo_v9_v10_e2e_research/week20_long_convergence_official_topk/runs_backup/week20_B_samefeat_w025_e100_coco128/weights/last.pt",
+      "role": "primary same-feature structural baseline"
+    },
+    "C_samefeat_copy_w025": {
+      "weight": "/content/drive/MyDrive/yolo_v9_v10_e2e_research/week20_long_convergence_official_topk/runs_backup/week20_C_samefeat_copy_w025_e100_coco128/weights/last.pt",
+      "role": "secondary copy-init control"
+    }
+  },
+  "four_stage_gate": {
+    "gate1": "problem confirmed in YOLOv9",
+    "gate2": "problem matches prior-work failure mode",
+    "gate3": "YOLOv9-native minimal redesign",
+    "gate4": "single-variable ablation"
+  }
+}
