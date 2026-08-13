@@ -1,0 +1,55 @@
+{
+  "week": 20,
+  "data_yaml": "data/week20_coco128.yaml",
+  "hyp_low": "data/hyps/hyp.week20-coco128-lowaug.yaml",
+  "imgsz": 640,
+  "batch": 8,
+  "workers": 2,
+  "epochs": 100,
+  "seed": 0,
+  "iou_thres": 0.7,
+  "max_det": 300,
+  "conf_sweep": [
+    0.0001,
+    0.0005,
+    0.001,
+    0.002,
+    0.005,
+    0.01,
+    0.05,
+    0.1,
+    0.25
+  ],
+  "box_probe_conf": [
+    0.0001,
+    0.001,
+    0.005,
+    0.01,
+    0.05,
+    0.1
+  ],
+  "ranking_iou_thresholds": [
+    0.3,
+    0.5
+  ],
+  "variants": {
+    "A_split_w025": {
+      "cfg": "models/detect/yolov9-s-v10dual.yaml",
+      "copy_init": false,
+      "o2m_loss_weight": 0.25,
+      "run_name": "week20_A_split_w025_e100_coco128"
+    },
+    "B_samefeat_w025": {
+      "cfg": "models/detect/yolov9-s-v10dual-samefeat.yaml",
+      "copy_init": false,
+      "o2m_loss_weight": 0.25,
+      "run_name": "week20_B_samefeat_w025_e100_coco128"
+    },
+    "C_samefeat_copy_w025": {
+      "cfg": "models/detect/yolov9-s-v10dual-samefeat.yaml",
+      "copy_init": true,
+      "o2m_loss_weight": 0.25,
+      "run_name": "week20_C_samefeat_copy_w025_e100_coco128"
+    }
+  }
+}
