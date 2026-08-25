@@ -1,0 +1,31 @@
+{
+  "week": 24,
+  "imgsz": 640,
+  "train_n": 5000,
+  "val_n": 5000,
+  "seed": 42,
+  "epochs": 10,
+  "batch": 8,
+  "workers": 2,
+  "conf": 0.001,
+  "iou": 0.7,
+  "max_det": 300,
+  "baseline_cfg": "models/detect/yolov9-s.yaml",
+  "proposed_cfg": "models/detect/yolov9-s-v10dual-samefeat.yaml",
+  "data_yaml": "data/week24_coco_train5k_val5k.yaml",
+  "hyp": "data/hyps/hyp.week24-transfer-lowaug.yaml",
+  "o2m_weight": 0.25,
+  "rank_mode": "negative_only",
+  "rank_weight": 0.1,
+  "rank_iou": 0.5,
+  "freeze": {
+    "baseline_freeze_backbone": 9,
+    "proposed_freeze_backbone": 9,
+    "proposed_head_only": 29
+  },
+  "runs": {
+    "baseline_freeze_backbone": "week24_baseline_freeze_backbone_e10_coco5k",
+    "proposed_freeze_backbone": "week24_proposed_freeze_backbone_e10_coco5k",
+    "proposed_head_only": "week24_proposed_head_only_e10_coco5k"
+  }
+}

@@ -263,6 +263,20 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
     for epoch in range(start_epoch, epochs):  # epoch ------------------------------------------------------------------
         callbacks.run('on_train_epoch_start')
         model.train()
+        # WEEK24_FREEZE_BN_PATCH
+        # Keep BatchNorm statistics fixed inside frozen layers.
+        if os.getenv("YOLO_FREEZE_BN", "0") == "1" and freeze:
+            for _name, _module in model.named_modules():
+                if isinstance(
+                    _module,
+                    torch.nn.modules.batchnorm._BatchNorm
+                ):
+                    if any(
+                        _name == _prefix[:-1]
+                        or _name.startswith(_prefix)
+                        for _prefix in freeze
+                    ):
+                        _module.eval()
 
         # Update image weights (optional, single-GPU only)
         if opt.image_weights:
