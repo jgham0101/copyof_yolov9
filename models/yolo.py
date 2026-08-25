@@ -187,6 +187,14 @@ class DualDetect(nn.Module):
             b[-1].bias.data[:m.nc] = math.log(5 / m.nc / (640 / s) ** 2)  # cls (5 objects and 80 classes per 640 image)
 
 
+# WEEK25_V10_O2M_EQUIVALENCE
+class V10O2MDetect(DDetect):
+    # Week25 functional-equivalence scaffold.
+    # Exact official DDetect math/decode is reused.
+    # No O2O / no-NMS logic is introduced here.
+    pass
+
+
 class DualDDetect(nn.Module):
     # YOLO Detect head for detection models
     dynamic = False  # force grid reconstruction
@@ -756,7 +764,7 @@ def parse_model(d, ch):  # model_dict, input_channels(3)
         elif m is CBFuse:
             c2 = ch[f[-1]]
         # TODO: channel, gw, gd
-        elif m in {Detect, DualDetect, TripleDetect, DDetect, DualDDetect, TripleDDetect, Segment, DSegment, DualDSegment, Panoptic}:
+        elif m in {Detect, DualDetect, TripleDetect, DDetect, V10O2MDetect, DualDDetect, TripleDDetect, Segment, DSegment, DualDSegment, Panoptic}:
             args.append([ch[x] for x in f])
             # if isinstance(args[1], int):  # number of anchors
             #     args[1] = [list(range(args[1] * 2))] * len(f)
