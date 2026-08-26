@@ -195,6 +195,18 @@ class V10O2MDetect(DDetect):
     pass
 
 
+# WEEK26_DORMANT_O2O
+class V10DualDormantDetect(DDetect):
+    def __init__(self, nc=80, ch=()):
+        super().__init__(nc, ch)
+        self.one2one_cv2 = deepcopy(self.cv2)
+        self.one2one_cv3 = deepcopy(self.cv3)
+
+    def forward(self, x):
+        # Week26: O2O modules deliberately not executed.
+        return super().forward(x)
+
+
 class DualDDetect(nn.Module):
     # YOLO Detect head for detection models
     dynamic = False  # force grid reconstruction
@@ -764,7 +776,7 @@ def parse_model(d, ch):  # model_dict, input_channels(3)
         elif m is CBFuse:
             c2 = ch[f[-1]]
         # TODO: channel, gw, gd
-        elif m in {Detect, DualDetect, TripleDetect, DDetect, V10O2MDetect, DualDDetect, TripleDDetect, Segment, DSegment, DualDSegment, Panoptic}:
+        elif m in {Detect, DualDetect, TripleDetect, DDetect, V10O2MDetect, V10DualDormantDetect, DualDDetect, TripleDDetect, Segment, DSegment, DualDSegment, Panoptic}:
             args.append([ch[x] for x in f])
             # if isinstance(args[1], int):  # number of anchors
             #     args[1] = [list(range(args[1] * 2))] * len(f)
