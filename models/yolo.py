@@ -207,6 +207,62 @@ class V10DualDormantDetect(DDetect):
         return super().forward(x)
 
 
+# WEEK27_ACTIVE_O2O_FORWARD
+class V10DualActiveForwardDetect(V10DualDormantDetect):
+    # Week27: execute detached O2O forward, but keep O2M as inference output.
+
+    def forward(self, x):
+        # Preserve original feature values before DDetect mutates the input list.
+        one2one_x = [xi.detach() for xi in x]
+
+        # Validated Week25/26 O2M path. This remains the externally returned path.
+        o2m_out = DDetect.forward(self, x)
+
+        # Active O2O forward on detached copies of the SAME main features.
+        o2o_raw = []
+        for i in range(self.nl):
+            o2o_raw.append(torch.cat((
+                self.one2one_cv2[i](one2one_x[i]),
+                self.one2one_cv3[i](one2one_x[i])
+            ), 1))
+
+        audit_return = os.getenv('YOLO_WEEK27_AUDIT_RETURN_O2O', '0') == '1'
+
+        if self.training:
+            if audit_return:
+                return {
+                    'o2m': o2m_out,
+                    'o2o_raw': o2o_raw,
+                    'o2o_decoded': None,
+                }
+            return o2m_out
+
+        # O2M eval has already initialized the same anchors/strides if needed.
+        shape = one2one_x[0].shape
+        box2, cls2 = torch.cat([
+            di.view(shape[0], self.no, -1) for di in o2o_raw
+        ], 2).split((self.reg_max * 4, self.nc), 1)
+
+        dbox2 = dist2bbox(
+            self.dfl(box2),
+            self.anchors.unsqueeze(0),
+            xywh=True,
+            dim=1,
+        ) * self.strides
+
+        o2o_decoded = torch.cat((dbox2, cls2.sigmoid()), 1)
+
+        if audit_return:
+            return {
+                'o2m': o2m_out,
+                'o2o_raw': o2o_raw,
+                'o2o_decoded': o2o_decoded,
+            }
+
+        # Production/evaluation interface stays identical to DDetect.
+        return o2m_out
+
+
 class DualDDetect(nn.Module):
     # YOLO Detect head for detection models
     dynamic = False  # force grid reconstruction
@@ -776,7 +832,7 @@ def parse_model(d, ch):  # model_dict, input_channels(3)
         elif m is CBFuse:
             c2 = ch[f[-1]]
         # TODO: channel, gw, gd
-        elif m in {Detect, DualDetect, TripleDetect, DDetect, V10O2MDetect, V10DualDormantDetect, DualDDetect, TripleDDetect, Segment, DSegment, DualDSegment, Panoptic}:
+        elif m in {Detect, DualDetect, TripleDetect, DDetect, V10O2MDetect, V10DualDormantDetect, V10DualActiveForwardDetect, DualDDetect, TripleDDetect, Segment, DSegment, DualDSegment, Panoptic}:
             args.append([ch[x] for x in f])
             # if isinstance(args[1], int):  # number of anchors
             #     args[1] = [list(range(args[1] * 2))] * len(f)
