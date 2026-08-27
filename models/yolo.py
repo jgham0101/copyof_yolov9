@@ -539,6 +539,29 @@ class DSegment(DDetect):
         return (torch.cat([x, mc], 1), p) if self.export else (torch.cat([x[0], mc], 1), (x[1], mc, p))
 
 
+# WEEK28_V2_DUAL_TRAINING_HEAD
+class V10DualTrainingDetectV2(V10DualActiveForwardDetect):
+    week28_dual_training = False
+
+    def forward(self, x):
+        if not self.training:
+            return V10DualActiveForwardDetect.forward(self, x)
+
+        # Model.__init__ stride bootstrap and all non-v2 training calls
+        # keep the native DDetect list-return contract.
+        if not self.week28_dual_training:
+            return DDetect.forward(self, x)
+
+        one2one_x = [xi.detach() for xi in x]
+        o2m_raw = DDetect.forward(self, x)
+        o2o_raw = []
+        for i in range(self.nl):
+            o2o_raw.append(torch.cat((
+                self.one2one_cv2[i](one2one_x[i]),
+                self.one2one_cv3[i](one2one_x[i])
+            ), 1))
+        return {'o2m': o2m_raw, 'o2o': o2o_raw}
+
 class DualDSegment(DualDDetect):
     # YOLO Segment head for segmentation models
     def __init__(self, nc=80, nm=32, npr=256, ch=(), inplace=True):
@@ -832,7 +855,7 @@ def parse_model(d, ch):  # model_dict, input_channels(3)
         elif m is CBFuse:
             c2 = ch[f[-1]]
         # TODO: channel, gw, gd
-        elif m in {Detect, DualDetect, TripleDetect, DDetect, V10O2MDetect, V10DualDormantDetect, V10DualActiveForwardDetect, DualDDetect, TripleDDetect, Segment, DSegment, DualDSegment, Panoptic}:
+        elif m in {Detect, DualDetect, TripleDetect, DDetect, V10O2MDetect, V10DualDormantDetect, V10DualActiveForwardDetect, V10DualTrainingDetectV2, DualDDetect, TripleDDetect, Segment, DSegment, DualDSegment, Panoptic}:
             args.append([ch[x] for x in f])
             # if isinstance(args[1], int):  # number of anchors
             #     args[1] = [list(range(args[1] * 2))] * len(f)
