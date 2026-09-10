@@ -1,0 +1,31 @@
+{
+  "problem2_source_checkpoint": "/content/drive/MyDrive/yolo_v9_v10_e2e_research/week39_one_factor_o2o_cls_scale_ablation/runs/week39_proposed_o2o_cls2_e20_coco5k/weights/last.pt",
+  "baseline_checkpoint": "/content/drive/MyDrive/yolo_v9_v10_e2e_research/week36_longer_training_convergence_test/runs/week36_baseline_yolov9s_e20_coco5k/weights/epoch19.pt",
+  "decoded_o2o_contract": [
+    "B,84,N",
+    "B,N,84"
+  ],
+  "native_nms": {
+    "conf": 0.001,
+    "iou": 0.7,
+    "max_det": 300,
+    "multi_label": true
+  },
+  "no_nms": {
+    "max_det": 300,
+    "conf": 0.001,
+    "sequence": [
+      "anchor max-class top-k",
+      "selected-anchor all-class flatten",
+      "global anchor\u00d7class top-k",
+      "confidence threshold",
+      "NO NMS"
+    ]
+  },
+  "week39_reproduction_gate": {
+    "internal_map50_95": 0.429,
+    "coco_api_ap50_95": 0.428,
+    "tolerance_abs": 0.005
+  },
+  "interpretation_rule": "Both internal and COCO API mAP/AP50-95 must pass \u00b10.005 before interpreting no-NMS delta."
+}

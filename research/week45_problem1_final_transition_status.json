@@ -1,0 +1,19 @@
+{
+  "problem": "Problem 1 \u2014 YOLOv9 to Dual/O2O structural migration residual",
+  "final_status": "ANALYSIS_COMPLETED_WITH_ACCEPTED_RESIDUAL",
+  "strict_closure_gate": "FAIL",
+  "strict_gate_relaxed": false,
+  "problem2_progression": "ALLOWED_BY_RESEARCH_PROGRESSION_DECISION",
+  "reason": "Structural catastrophic degradation was sufficiently recovered and Weeks 40-44 performed targeted diagnosis/causal intervention, but the remaining residual was not eliminated by a single defect fix. Problem 2 proceeds to quantify the NMS-free latency-accuracy tradeoff without claiming strict Problem 1 closure.",
+  "best_proposed_reference": {
+    "source": "Week39 cls\u00d72 20e",
+    "internal_map50_95": 0.429,
+    "coco_api_ap50_95": 0.428
+  },
+  "baseline_reference": {
+    "source": "Week36 native YOLOv9-S 20e",
+    "internal_map50_95": 0.453,
+    "coco_api_ap50_95": 0.454
+  },
+  "week44_negative_ablation": "preserved; not used as Problem 2 source"
+}
