@@ -1,0 +1,39 @@
+{
+  "derived_before_any_AP_evaluation": true,
+  "training_performed_before_freeze": false,
+  "calibration_batches": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "validation_batches": [
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15
+  ],
+  "absolute_aux_calibration_mean": 0.2854679096490145,
+  "relative_aux_calibration_mean": 1.0214918926358223,
+  "lambda_match": 0.2794617477701198,
+  "absolute_aux_validation_mean": 0.25580452755093575,
+  "relative_aux_validation_mean": 1.0040273219347,
+  "effective_relative_aux_validation_mean": 0.28058723019682397,
+  "validation_effective_over_absolute_ratio": 1.0968814073900763,
+  "selector_identity_all_16_batches": true,
+  "relative_margin_logit": 1.0,
+  "rule": "lambda = mean(abs aux on calibration) / mean(relative aux on calibration)",
+  "acceptance": {
+    "lambda_between_0p10_and_0p50": true,
+    "validation_scale_ratio_between_0p85_and_1p15": true
+  },
+  "pass": true
+}
